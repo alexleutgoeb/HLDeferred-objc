@@ -89,6 +89,10 @@ static unsigned int runningRequestCount = 0;
 
 - (void) execute
 {
+  runningRequestCount++;
+#if TARGET_OS_IPHONE
+  [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:YES];
+#endif
 	[conn_ release];
     conn_ = [[NSURLConnection alloc] initWithRequest: [self urlRequest]
                                             delegate: self];
@@ -154,10 +158,6 @@ static unsigned int runningRequestCount = 0;
 
 - (void) connection: (NSURLConnection *)connection didReceiveResponse: (NSURLResponse *)aResponse
 {
-    runningRequestCount++;
-#if TARGET_OS_IPHONE
-    [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:YES];
-#endif
     [response_ release];
     response_ = [aResponse retain];
     [self responseBegan];
