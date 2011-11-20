@@ -6,7 +6,13 @@
 //  See included LICENSE file (MIT) for licensing information.
 //
 
+#if TARGET_OS_IPHONE
+#import <UIKit/UIKit.h>
+#endif
 #import "HLURLDataSource.h"
+
+// Count started requests for network indicator
+static unsigned int runningRequestCount = 0;
 
 @implementation HLURLDataSource
 
@@ -135,13 +141,24 @@
 
 - (void) connection: (NSURLConnection *)connection didFailWithError: (id)anError
 {
+    runningRequestCount--;
+    if (runningRequestCount <= 0) {
+      runningRequestCount = 0;
+#if TARGET_OS_IPHONE
+      [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];	
+#endif
+    }
     [self setError: anError];
     [self responseFailed];
 }
 
 - (void) connection: (NSURLConnection *)connection didReceiveResponse: (NSURLResponse *)aResponse
 {
-	[response_ release];
+    runningRequestCount++;
+#if TARGET_OS_IPHONE
+    [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:YES];
+#endif
+    [response_ release];
     response_ = [aResponse retain];
     [self responseBegan];
 }
@@ -153,6 +170,13 @@
 
 - (void) connectionDidFinishLoading: (NSURLConnection *)connection
 {
+    runningRequestCount--;
+    if (runningRequestCount <= 0) {
+      runningRequestCount = 0;
+#if TARGET_OS_IPHONE
+      [[UIApplication sharedApplication] setNetworkActivityIndicatorVisible:NO];	
+#endif
+    }
     [self setResult: responseData_];
     [self responseFinished];
 }
